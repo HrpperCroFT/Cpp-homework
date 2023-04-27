@@ -23,7 +23,7 @@ class Deque {
   size_t size_, begin_bucket_, begin_index_, bucket_quantity_;
   Bucket* buckets_;
 
-  template<typename... Args>
+  template <typename... Args>
   void make_deque(size_t sz, const Args&... value);
 
   template <bool is_constant = false>
@@ -196,10 +196,10 @@ std::pair<size_t, size_t> Deque<T>::get_position(
   return {it.bucket_ - buckets_, it.position_};
 }
 
-template<typename T>
-template<typename... Args>
+template <typename T>
+template <typename... Args>
 void Deque<T>::make_deque(size_t sz, const Args&... value) {
-buckets_ = new Bucket[bucket_quantity_];
+  buckets_ = new Bucket[bucket_quantity_];
   size_t i = begin_bucket_, j = begin_index_, current = 0;
   try {
     for (; current < size_; ++current) {
