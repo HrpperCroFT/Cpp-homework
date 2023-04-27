@@ -221,7 +221,7 @@ Deque<T>::Deque(size_t sz)
       begin_bucket_(1),
       begin_index_(0),
       bucket_quantity_((sz + Bucket::size - 1) / Bucket::size + 2) {
-  make_deque<true>(sz);
+  make_deque(sz);
 }
 
 template <typename T>
@@ -230,7 +230,7 @@ Deque<T>::Deque(size_t sz, const T& value)
       begin_bucket_(1),
       begin_index_(0),
       bucket_quantity_((sz + Bucket::size - 1) / Bucket::size + 2) {
-  make_deque<false>(sz, value);
+  make_deque(sz, value);
 }
 
 template <typename T>
