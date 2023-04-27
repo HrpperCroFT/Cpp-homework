@@ -216,8 +216,13 @@ void List<T, Allocator>::clear() {
 
 template <typename T, typename Allocator>
 void List<T, Allocator>::make_list(size_t size, const T& value) {
-  for (size_t i = 0; i < size; ++i) {
-    push_back(value);
+  try {
+    for (size_t i = 0; i < size; ++i) {
+      push_back(value);
+    }
+  } catch (...) {
+    clear();
+    throw;
   }
 }
 
@@ -226,23 +231,28 @@ void List<T, Allocator>::make_list(size_t size) {
   if (size == 0) {
     return;
   }
-  BaseNode* current = &end_;
-  for (size_t i = 0; i < size; ++i) {
-    current->next = node_allocator_traits::allocate(node_allocator_, 1);
-    try {
-      node_allocator_traits::construct(node_allocator_,
-                                       static_cast<Node*>(current->next));
-    } catch (...) {
-      current->next = &end_;
-      end_.previous = current;
-      throw;
+  try {
+    BaseNode* current = &end_;
+    for (size_t i = 0; i < size; ++i) {
+      current->next = node_allocator_traits::allocate(node_allocator_, 1);
+      try {
+        node_allocator_traits::construct(node_allocator_,
+                                         static_cast<Node*>(current->next));
+      } catch (...) {
+        current->next = &end_;
+        end_.previous = current;
+        throw;
+      }
+      ++size_;
+      current->next->previous = current;
+      current = current->next;
     }
-    ++size_;
-    current->next->previous = current;
-    current = current->next;
+    end_.previous = current;
+    current->next = &end_;
+  } catch (...) {
+    clear();
+    throw;
   }
-  end_.previous = current;
-  current->next = &end_;
 }
 
 template <typename T, typename Allocator>
@@ -285,99 +295,41 @@ List<T, Allocator>& List<T, Allocator>::operator=(
 template <typename T, typename Allocator>
 List<T, Allocator>::List(size_t size, const T& value, const Allocator& alloc)
     : node_allocator_(alloc) {
-  try {
-    make_list(size, value);
-  }
-  catch (...) {
-    clear();
-    throw;
-  }
+  make_list(size, value);
 }
 
 template <typename T, typename Allocator>
-List<T, Allocator>::List(size_t size, const T& value)
-    : node_allocator_() {
-  try {
-    make_list(size, value);
-  } catch (...) {
-    clear();
-    throw;
-  }
-}
+List<T, Allocator>::List(size_t size, const T& value) : List(size, value, Allocator()) {}
 
 template <typename T, typename Allocator>
-List<T, Allocator>::List(size_t size) : node_allocator_() {
-  try {
-    make_list(size);
-  } catch (...) {
-    clear();
-    throw;
-  }
-}
+List<T, Allocator>::List(size_t size) : List(size, Allocator()) {}
 
 template <typename T, typename Allocator>
 List<T, Allocator>::List(size_t size, const Allocator& alloc)
     : node_allocator_(alloc) {
-  try {
-    make_list(size);
-  } catch (...) {
-    clear();
-    throw;
-  }
+  make_list(size);
 }
 
 template<typename T, typename Allocator>
 void List<T, Allocator>::push_front(const T& value) {
-   Node* new_node = node_allocator_traits::allocate(node_allocator_, 1);
-   try {
-    node_allocator_traits::construct(
-        node_allocator_, new_node, value);
-   } catch (...) {
-    node_allocator_traits::deallocate(node_allocator_, new_node, 1);
-    return;
-   }
-   new_node->previous = &end_;
-   new_node->next = end_.next;
-   end_.next->previous = new_node;
-   end_.next = new_node;
-   ++size_;
+   insert(begin());
 }
 
 template <typename T, typename Allocator>
 void List<T, Allocator>::push_back(const T& value) {
-   Node* new_node = node_allocator_traits::allocate(node_allocator_, 1);
-   try {
-    node_allocator_traits::construct(node_allocator_, new_node, value);
-   } catch (...) {
-    node_allocator_traits::deallocate(node_allocator_, new_node, 1);
-    return;
-   }
-   new_node->previous = end_.previous;
-   new_node->previous->next = new_node;
-   new_node->next = &end_;
-   end_.previous = new_node;
-   ++size_;
+   insert(end());
 }
 
 template <typename T, typename Allocator>
 void List<T, Allocator>::pop_front() {
-   BaseNode* tmp = end_.next->next;
-   node_allocator_traits::destroy(node_allocator_, static_cast<Node*>(end_.next));
-   node_allocator_traits::deallocate(node_allocator_, static_cast<Node*>(end_.next), 1);
-   end_.next = tmp;
-   tmp->previous = &end_;
-   --size_;
+   erase(begin());
 }
 
 template <typename T, typename Allocator>
 void List<T, Allocator>::pop_back() {
-   BaseNode* rbeg = end_.previous;
-   rbeg->previous->next = &end_;
-   end_.previous = rbeg->previous;
-   node_allocator_traits::destroy(node_allocator_, static_cast<Node*>(rbeg));
-   node_allocator_traits::deallocate(node_allocator_, static_cast<Node*>(rbeg),
-                                     1);
-   --size_;
+   const_iterator rbeg = end();
+   --rbeg;
+   erase(rbeg);
 }
 
 template <typename T, typename Allocator>
