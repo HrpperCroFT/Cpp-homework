@@ -10,7 +10,7 @@ class Deque {
     static const size_t size = 32;
     T* elements_;
     Bucket()
-        : elements_(reinterpret_cast<T*>(new char[size_ * sizeof(T)])) {
+        : elements_(reinterpret_cast<T*>(new char[size * sizeof(T)])) {
     }
     T& operator[](size_t position) {
       return elements_[position];
@@ -22,6 +22,9 @@ class Deque {
 
   size_t size_, begin_bucket_, begin_index_, bucket_quantity_;
   Bucket* buckets_;
+
+  template<typename... Args>
+  void make_deque(size_t sz, const Args&... value);
 
   template <bool is_constant = false>
   class base_iterator {
@@ -193,20 +196,14 @@ std::pair<size_t, size_t> Deque<T>::get_position(
   return {it.bucket_ - buckets_, it.position_};
 }
 
-template <typename T>
-Deque<T>::Deque(size_t sz)
-    : size_(sz),
-      begin_bucket_(1),
-      begin_index_(0),
-      bucket_quantity_((sz + Bucket::size - 1) / Bucket::size + 2) {
-  if (size_ == 0) {
-    return;
-  }
-  buckets_ = new Bucket[bucket_quantity_];
+template<typename T>
+template<typename... Args>
+void Deque<T>::make_deque(size_t sz, const Args&... value) {
+buckets_ = new Bucket[bucket_quantity_];
   size_t i = begin_bucket_, j = begin_index_, current = 0;
   try {
     for (; current < size_; ++current) {
-      new (buckets_[i].elements_ + j) T();
+      new (buckets_[i].elements_ + j) T(value...);
       ++j;
       if (j == Bucket::size) {
         j = 0, ++i;
@@ -219,28 +216,21 @@ Deque<T>::Deque(size_t sz)
 }
 
 template <typename T>
+Deque<T>::Deque(size_t sz)
+    : size_(sz),
+      begin_bucket_(1),
+      begin_index_(0),
+      bucket_quantity_((sz + Bucket::size - 1) / Bucket::size + 2) {
+  make_deque<true>(sz);
+}
+
+template <typename T>
 Deque<T>::Deque(size_t sz, const T& value)
     : size_(sz),
       begin_bucket_(1),
       begin_index_(0),
       bucket_quantity_((sz + Bucket::size - 1) / Bucket::size + 2) {
-  if (size_ == 0) {
-    return;
-  }
-  buckets_ = new Bucket[bucket_quantity_];
-  size_t i = begin_bucket_, j = begin_index_, current = 0;
-  try {
-    for (; current < size_; ++current) {
-      new (buckets_[i].elements_ + j) T(value);
-      ++j;
-      if (j == Bucket::size) {
-        j = 0, ++i;
-      }
-    }
-  } catch (...) {
-    delete_all(current);
-    throw;
-  }
+  make_deque<false>(sz, value);
 }
 
 template <typename T>
@@ -477,8 +467,7 @@ void Deque<T>::push_front(const T& value) {
       for (size_t i = begin_bucket_; i <= last_bucket; ++i) {
         new_buckets[i + bucket_quantity_] = buckets_[i];
       }
-      new (new_buckets[bucket_quantity_].elements_ + Bucket::size - 1)
-          T(value);
+      new (new_buckets[bucket_quantity_].elements_ + Bucket::size - 1) T(value);
     } catch (...) {
       delete[] new_buckets;
       throw;
@@ -502,9 +491,6 @@ void Deque<T>::push_front(const T& value) {
 
 template <typename T>
 void Deque<T>::pop_back() {
-  if (size_ == 0) {
-    throw "There are no elements";
-  }
   auto pos = get_rbegin();
   (buckets_[pos.first].elements_ + pos.second)->~T();
   --size_;
@@ -516,9 +502,6 @@ void Deque<T>::pop_back() {
 
 template <typename T>
 void Deque<T>::pop_front() {
-  if (size_ == 0) {
-    throw "There are no elements";
-  }
   (buckets_[begin_bucket_].elements_ + begin_index_)->~T();
   ++begin_index_;
   if (begin_index_ == Bucket::size) {
