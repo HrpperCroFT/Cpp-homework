@@ -151,10 +151,10 @@ class SharedPtr {
   friend class WeakPtr;
 
   template <typename U, typename... Args>
-  friend SharedPtr<U> makeShared(Args&&...);
+  friend SharedPtr<U> makeShared(Args&&...); // NOLINT
 
   template <typename U, typename Alloc, typename... Args>
-  friend SharedPtr<U> allocateShared(const Alloc&, Args&&...);
+  friend SharedPtr<U> allocateShared(const Alloc&, Args&&...); // NOLINT
 };
 
 template <typename T>
