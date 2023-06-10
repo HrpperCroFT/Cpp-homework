@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
-#include <type_traits>
 #include <memory>
+#include <type_traits>
 
 template <typename T>
 class WeakPtr;
@@ -151,10 +151,10 @@ class SharedPtr {
   friend class WeakPtr;
 
   template <typename U, typename... Args>
-  friend SharedPtr<U> makeShared(Args&&...); // NOLINT
+  friend SharedPtr<U> makeShared(Args&&...);  // NOLINT
 
   template <typename U, typename Alloc, typename... Args>
-  friend SharedPtr<U> allocateShared(const Alloc&, Args&&...); // NOLINT
+  friend SharedPtr<U> allocateShared(const Alloc&, Args&&...);  // NOLINT
 };
 
 template <typename T>
