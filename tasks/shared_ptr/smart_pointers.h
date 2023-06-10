@@ -10,9 +10,9 @@ struct BaseControlBlock {
   size_t count_shared = 0;
   size_t count_weak = 0;
 
-  virtual void* GetPtr() = 0;
+  virtual void* get_ptr() = 0;
 
-  virtual void DeleteObject() = 0;
+  virtual void delete_object() = 0;
 
   virtual ~BaseControlBlock() = default;
 };
@@ -31,7 +31,7 @@ class SharedPtr {
         ControlBlock<U, Deleter, Alloc>>;
     using AllocTraits = typename std::allocator_traits<AllocNormal>;
 
-    void* GetPtr() {
+    void* get_ptr() {
       return static_cast<void*>(ptr);
     }
 
@@ -52,7 +52,7 @@ class SharedPtr {
     }
     ~ControlBlock();
 
-    void DeleteObject();
+    void delete_object();
   };
 
   template <typename Alloc>
@@ -65,7 +65,7 @@ class SharedPtr {
         SpecificControlBlock<Alloc>>;
     using AllocTraits = typename std::allocator_traits<AllocNormal>;
 
-    void* GetPtr() {
+    void* get_ptr() {
       return static_cast<void*>(object);
     }
 
@@ -81,7 +81,7 @@ class SharedPtr {
     }
     ~SpecificControlBlock();
 
-    void DeleteObject();
+    void delete_object();
   };
 
   BaseControlBlock* block_ = nullptr;
@@ -162,7 +162,7 @@ T* SharedPtr<T>::get() const {
   if (block_ == nullptr) {
     return nullptr;
   }
-  return static_cast<T*>(block_->GetPtr());
+  return static_cast<T*>(block_->get_ptr());
 }
 
 template <typename T>
@@ -181,7 +181,7 @@ SharedPtr<T>::ControlBlock<U, Deleter, Alloc>::~ControlBlock() {
 
 template <typename T>
 template <typename U, typename Deleter, typename Alloc>
-void SharedPtr<T>::ControlBlock<U, Deleter, Alloc>::DeleteObject() {
+void SharedPtr<T>::ControlBlock<U, Deleter, Alloc>::delete_object() {
   deleter(ptr);
 }
 
@@ -193,7 +193,7 @@ SharedPtr<T>::SpecificControlBlock<Alloc>::~SpecificControlBlock() {
 
 template <typename T>
 template <typename Alloc>
-void SharedPtr<T>::SpecificControlBlock<Alloc>::DeleteObject() {
+void SharedPtr<T>::SpecificControlBlock<Alloc>::delete_object() {
   AllocTraitsObject::destroy(alloc, reinterpret_cast<T*>(object));
 }
 
@@ -204,7 +204,7 @@ void SharedPtr<T>::delete_block() {
   }
   --block_->count_shared;
   if (block_->count_shared == 0) {
-    block_->DeleteObject();
+    block_->delete_object();
     if (block_->count_weak == 0) {
       block_->~BaseControlBlock();
     }
