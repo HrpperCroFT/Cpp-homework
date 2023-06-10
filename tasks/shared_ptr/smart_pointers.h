@@ -314,7 +314,7 @@ void SharedPtr<T>::reset(U* ptr) {
 }
 
 template <typename T, typename... Args>
-SharedPtr<T> makeShared(Args&&... args) {
+SharedPtr<T> makeShared(Args&&... args) {  // NOLINT
   SharedPtr<T> result;
   result.block_ = new
       typename SharedPtr<T>::template SpecificControlBlock<std::allocator<T>>(
@@ -324,7 +324,7 @@ SharedPtr<T> makeShared(Args&&... args) {
 }
 
 template <typename T, typename Alloc, typename... Args>
-SharedPtr<T> allocateShared(const Alloc& alloc, Args&&... args) {
+SharedPtr<T> allocateShared(const Alloc& alloc, Args&&... args) {  // NOLINT
   SharedPtr<T> result;
   auto rebinded = typename std::allocator_traits<Alloc>::template rebind_alloc<
       typename SharedPtr<T>::template SpecificControlBlock<Alloc>>(alloc);
