@@ -35,17 +35,8 @@ class SharedPtr {
       return static_cast<void*>(ptr);
     }
 
-    ControlBlock(U* ptr)
-        : ptr(ptr),
-          deleter(),
-          alloc() {
-    }
-    ControlBlock(U* ptr, const Deleter& deleter)
-        : ptr(ptr),
-          deleter(deleter),
-          alloc() {
-    }
-    ControlBlock(U* ptr, const Deleter& deleter, const Alloc& alloc)
+    ControlBlock(U* ptr, const Deleter& deleter = Deleter(),
+                 const Alloc& alloc = Alloc())
         : ptr(ptr),
           deleter(deleter),
           alloc(alloc) {
@@ -313,23 +304,17 @@ void SharedPtr<T>::reset(U* ptr) {
   ++block_->count_shared;
 }
 
-template <typename T, typename... Args>
-SharedPtr<T> makeShared(Args&&... args) {  // NOLINT
-  SharedPtr<T> result;
-  result.block_ = new
-      typename SharedPtr<T>::template SpecificControlBlock<std::allocator<T>>(
-          std::forward<Args>(args)...);
-  ++result.block_->count_shared;
-  return result;
-}
-
 template <typename T, typename Alloc, typename... Args>
 SharedPtr<T> allocateShared(const Alloc& alloc, Args&&... args) {  // NOLINT
   SharedPtr<T> result;
   auto rebinded = typename std::allocator_traits<Alloc>::template rebind_alloc<
       typename SharedPtr<T>::template SpecificControlBlock<Alloc>>(alloc);
+  using traits = typename std::allocator_traits<
+      typename std::allocator_traits<Alloc>::template rebind_alloc<
+          typename SharedPtr<T>::template SpecificControlBlock<Alloc>>>;
   result.block_ = rebinded.allocate(1);
-  rebinded.construct(
+  traits::construct(
+      rebinded,
       static_cast<typename SharedPtr<T>::template SpecificControlBlock<Alloc>*>(
           result.block_),
       std::forward<Args>(args)...);
@@ -337,6 +322,12 @@ SharedPtr<T> allocateShared(const Alloc& alloc, Args&&... args) {  // NOLINT
     ++result.block_->count_shared;
   }
   return result;
+}
+
+template <typename T, typename... Args>
+SharedPtr<T> makeShared(Args&&... args) {  // NOLINT
+  return allocateShared<T, std::allocator<T>>(std::allocator<T>(),
+                                              std::forward<Args>(args)...);
 }
 
 template <typename T>
