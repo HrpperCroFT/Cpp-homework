@@ -548,7 +548,7 @@ void TestPerformance() {
 
 int main() {
 
-    const rlim_t kStackSize = 210 * 1024 * 1024;   // min stack size = 16 MB
+    const rlim_t kStackSize = 400 * 1024 * 1024;   // min stack size = 16 MB
     struct rlimit rl;
     int result;
 
@@ -631,11 +631,11 @@ int main() {
     
     std::cerr << "Starting performance test. First, let's test performance of different allocators with std::list." << std::endl;
 
-    // TestPerformance<std::list>();
+    TestPerformance<std::list>();
 
     std::cerr << "Well, looks good! Finally let's test with your List!" << std::endl;
 
-    // TestPerformance<List>();
+    TestPerformance<List>();
 
     std::cerr << "Tests passed, my sweetheart!" << std::endl;
 
