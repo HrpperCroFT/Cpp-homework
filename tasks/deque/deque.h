@@ -239,7 +239,7 @@ void Deque<T>::make_deque(size_t sz, const Args&... value) {
   make_buckets();
   size_t i = begin_bucket_, j = begin_index_, current = 0;
   try {
-    for (; current < size_; ++current) {
+    for (; current < sz; ++current) {
       new (buckets_[i].elements_ + j) T(value...);
       ++j;
       if (j == Bucket::size) {
